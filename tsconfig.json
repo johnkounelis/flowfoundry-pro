@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@flowfoundry/config": ["./packages/config/src/index.ts"],
+      "@flowfoundry/ui": ["./packages/ui/src/index.ts"],
+      "@flowfoundry/otel": ["./packages/otel/src/index.ts"],
+      "@flowfoundry/connectors": ["./packages/connector-sdk/src/index.ts"],
+      "@flowfoundry/db": ["./packages/db/src/index.ts"]
+    }
+  }
+}

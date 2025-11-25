@@ -1,0 +1,40 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build output
+dist
+.next
+.turbo
+
+# Test
+coverage
+playwright-report
+test-results
+k6-results.json
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Prisma
+packages/db/prisma/dev.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+

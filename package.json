@@ -1,0 +1,30 @@
+{
+  "name": "flowfoundry-pro",
+  "private": true,
+  "license": "MIT",
+  "packageManager": "pnpm@9.9.0",
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "e2e": "turbo run e2e",
+    "a11y": "turbo run a11y",
+    "k6": "node scripts/loadtest.sh",
+    "db:migrate": "pnpm --filter @flowfoundry/db prisma migrate deploy",
+    "db:reset": "pnpm --filter @flowfoundry/db prisma migrate reset --force",
+    "db:seed": "tsx database/seed.ts",
+    "dev:bootstrap": "tsx scripts/dev_bootstrap.ts",
+    "sbom": "bash scripts/sbom.sh",
+    "scan:secrets": "bash scripts/scan:secrets.sh",
+    "scan:trivy": "bash scripts/scan:trivy.sh",
+    "scan:codeql": "bash scripts/scan:codeql.sh"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "turbo": "^2.5.8",
+    "typescript": "^5.6.2"
+  }
+}

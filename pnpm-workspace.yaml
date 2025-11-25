@@ -1,0 +1,7 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "database"
+  - "docs"
+  - "scripts"
+  - "infra"
