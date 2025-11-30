@@ -1,0 +1,259 @@
+// Prisma schema for FlowFoundry Pro
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String       @id @default(cuid())
+  email       String       @unique
+  name        String?
+  image       String?
+  password    String?      // Hashed password for credentials provider (null for OAuth users)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  memberships Membership[]
+  sessions    Session[]
+  accounts    Account[]
+  auditLogs   AuditLog[]
+  apiKeys     ApiKey[]
+  deletedAt   DateTime?
+}
+
+model Organization {
+  id            String         @id @default(cuid())
+  name          String
+  slug          String         @unique
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  members       Membership[]
+  subscriptions Subscription[]
+  connectors    Connector[]
+  credentials   Credential[]
+  flows         Flow[]
+  invites       Invite[]
+  usageEvents   UsageEvent[]
+  auditLogs     AuditLog[]
+  // ✅ back-relations που έλειπαν:
+  runs          Run[]
+  apiKeys       ApiKey[]
+  deletedAt     DateTime?
+
+  @@index([slug])
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  userId    String
+  orgId     String
+  role      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User         @relation(fields: [userId], references: [id])
+  org  Organization @relation(fields: [orgId], references: [id])
+
+  @@unique([userId, orgId])
+  @@index([orgId, role])
+}
+
+model Subscription {
+  id                   String   @id @default(cuid())
+  orgId                String
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  plan                 String
+  status               String   @default("active")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  org Organization @relation(fields: [orgId], references: [id])
+
+  @@index([orgId, plan, status])
+}
+
+model Connector {
+  id        String   @id @default(cuid())
+  orgId     String
+  type      String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org         Organization @relation(fields: [orgId], references: [id])
+  credentials Credential[]
+
+  @@index([orgId, type])
+}
+
+model Credential {
+  id          String   @id @default(cuid())
+  orgId       String
+  connectorId String?
+  envelope    Bytes // libsodium sealed box
+  createdAt   DateTime @default(now())
+
+  org       Organization @relation(fields: [orgId], references: [id])
+  connector Connector?   @relation(fields: [connectorId], references: [id])
+}
+
+model Flow {
+  id        String        @id @default(cuid())
+  orgId     String
+  name      String
+  createdBy String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  versions  FlowVersion[]
+  // ✅ back-relation προς Run
+  runs      Run[]
+
+  org Organization @relation(fields: [orgId], references: [id])
+
+  @@index([orgId, name])
+}
+
+model FlowVersion {
+  id         String   @id @default(cuid())
+  flowId     String
+  version    Int
+  definition Json
+  createdAt  DateTime @default(now())
+
+  flow Flow @relation(fields: [flowId], references: [id])
+
+  @@unique([flowId, version])
+}
+
+model Run {
+  id             String    @id @default(cuid())
+  orgId          String
+  flowId         String
+  versionId      String
+  status         String    @default("queued") // queued|running|succeeded|failed
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  triggerPayload Json?
+  steps          RunStep[]
+  costUsd        Decimal   @default(0)
+  tokens         Int       @default(0)
+
+  // ✅ σχέσεις (κρατάμε όπως ήταν)
+  org  Organization @relation(fields: [orgId], references: [id])
+  flow Flow         @relation(fields: [flowId], references: [id])
+
+  @@index([orgId, flowId, status, createdAt])
+}
+
+model RunStep {
+  id         String    @id @default(cuid())
+  runId      String
+  name       String
+  type       String
+  status     String
+  startedAt  DateTime?
+  finishedAt DateTime?
+  logs       Json
+  error      String?
+
+  run Run @relation(fields: [runId], references: [id])
+
+  @@index([runId, status])
+}
+
+model UsageEvent {
+  id        String   @id @default(cuid())
+  orgId     String
+  type      String // run|ai_tokens
+  amount    Int
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  org Organization @relation(fields: [orgId], references: [id])
+
+  @@index([orgId, type, createdAt])
+}
+
+model Template {
+  id          String @id @default(cuid())
+  key         String @unique
+  name        String
+  description String
+  definition  Json
+}
+
+model Invite {
+  id        String       @id @default(cuid())
+  orgId     String
+  email     String
+  role      String
+  token     String       @unique
+  createdAt DateTime     @default(now())
+  // ✅ opposite relation προς Organization
+  org       Organization @relation(fields: [orgId], references: [id])
+}
+
+model ApiKey {
+  id        String   @id @default(cuid())
+  userId    String?
+  orgId     String
+  name      String
+  hashedKey String
+  createdAt DateTime @default(now())
+
+  org  Organization @relation(fields: [orgId], references: [id])
+  user User?        @relation(fields: [userId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  orgId     String
+  userId    String?
+  action    String
+  entity    String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  org  Organization @relation(fields: [orgId], references: [id])
+  user User?        @relation(fields: [userId], references: [id])
+}
+
+// Auth.js models (Prisma Adapter)
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}

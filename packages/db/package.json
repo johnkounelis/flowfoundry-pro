@@ -1,0 +1,25 @@
+{
+  "name": "@flowfoundry/db",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "prisma": "prisma",
+    "migrate:dev": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "seed": "tsx src/seed.ts"
+  },
+  "dependencies": {
+    "@flowfoundry/connectors": "workspace:^",
+    "@prisma/client": "^5.20.0",
+    "libsodium-wrappers": "^0.7.14",
+    "nodemailer": "^7.0.10",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "prisma": "^5.20.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.2"
+  }
+}
