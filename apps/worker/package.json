@@ -1,0 +1,26 @@
+{
+  "name": "@flowfoundry/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@flowfoundry/config": "workspace:*",
+    "@flowfoundry/connectors": "workspace:*",
+    "@flowfoundry/db": "workspace:*",
+    "@flowfoundry/otel": "workspace:*",
+    "dotenv": "^17.2.3",
+    "inngest": "^3.19.0",
+    "ioredis": "^5.4.1"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.2",
+    "@types/node": "^20.14.11"
+  }
+}
