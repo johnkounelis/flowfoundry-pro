@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: flowfoundry-worker }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: flowfoundry-worker } }
+  template:
+    metadata: { labels: { app: flowfoundry-worker } }
+    spec:
+      containers:
+        - name: worker
+          image: ghcr.io/yourorg/flowfoundry-worker:latest
+          envFrom:
+            - secretRef: { name: flowfoundry-secrets }

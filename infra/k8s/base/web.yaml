@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: flowfoundry-web }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: flowfoundry-web } }
+  template:
+    metadata: { labels: { app: flowfoundry-web } }
+    spec:
+      containers:
+        - name: web
+          image: ghcr.io/yourorg/flowfoundry-web:latest
+          ports: [{ containerPort: 3000 }]
+          envFrom:
+            - secretRef: { name: flowfoundry-secrets }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: flowfoundry-web }
+spec:
+  selector: { app: flowfoundry-web }
+  ports: [{ port: 80, targetPort: 3000 }]

@@ -1,0 +1,12 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: flowfoundry
+spec:
+  rules:
+    - host: app.flowfoundry.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: flowfoundry-web, port: { number: 80 } } }

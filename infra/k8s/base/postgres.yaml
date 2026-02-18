@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: { name: pgdata }
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources: { requests: { storage: 10Gi } }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: postgres }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: postgres } }
+  template:
+    metadata: { labels: { app: postgres } }
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          env:
+            - { name: POSTGRES_PASSWORD, valueFrom: { secretKeyRef: { name: flowfoundry-secrets, key: POSTGRES_PASSWORD } } }
+            - { name: POSTGRES_USER, value: "postgres" }
+            - { name: POSTGRES_DB, value: "flowfoundry" }
+          ports: [{ containerPort: 5432 }]
+          volumeMounts: [{ mountPath: /var/lib/postgresql/data, name: data }]
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: pgdata }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: postgres }
+spec:
+  selector: { app: postgres }
+  ports: [{ port: 5432, targetPort: 5432 }]
