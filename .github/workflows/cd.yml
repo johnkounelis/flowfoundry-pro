@@ -1,0 +1,22 @@
+name: CD
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths: ["apps/**", "packages/**", "infra/**"]
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9.9.0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: "pnpm" }
+      - run: pnpm i
+      - run: docker build -f infra/Dockerfile.web -t ghcr.io/${{ github.repository }}/flowfoundry-web:latest .
+      - run: docker build -f infra/Dockerfile.worker -t ghcr.io/${{ github.repository }}/flowfoundry-worker:latest .
+      - uses: docker/login-action@v3
+        with: { registry: ghcr.io, username: ${{ github.actor }}, password: ${{ secrets.GITHUB_TOKEN }} }
+      - run: docker push ghcr.io/${{ github.repository }}/flowfoundry-web:latest
+      - run: docker push ghcr.io/${{ github.repository }}/flowfoundry-worker:latest
