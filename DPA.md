@@ -1,0 +1,3 @@
+# Data Processing Addendum (Template)
+
+This DPA forms part of the Terms and applies when we process personal data on your behalf...

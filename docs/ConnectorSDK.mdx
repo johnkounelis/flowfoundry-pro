@@ -1,0 +1,71 @@
+<!--
+MIT License — Copyright (c) 2025 J. Kunelis
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+-->
+
+## Connector SDK
+
+This document describes the FlowFoundryPro Connector SDK and examples for Slack and Gmail typed clients.
+
+### Slack Client
+
+Example usage with an incoming webhook URL (dev/demo):
+
+```ts
+import { createSlackClient } from "@flowfoundry/connectors";
+
+const slack = createSlackClient({
+  orgId: "demo-org",
+  credentials: { webhookUrl: process.env.SLACK_WEBHOOK_URL! },
+  emitLog: (msg, extra) => console.log(msg, extra)
+});
+
+await slack.sendMessage({ text: "Hello from FlowFoundryPro" });
+```
+
+### Gmail Client (Demo)
+
+The Gmail client validates inputs and enqueues a demo result:
+
+```ts
+import { createGmailClient } from "@flowfoundry/connectors";
+
+const gmail = createGmailClient({ orgId: "demo-org", emitLog: () => {} });
+await gmail.sendEmail({ to: ["user@example.com"], subject: "Hi", html: "<b>Hello</b>" });
+```
+
+### Inngest Slack Send Function
+
+The app includes an Inngest function `slack-send-message` that posts with retry/backoff.
+Emit event `slack.send` with data shape `{ orgId, text, webhookUrl? | apiKey? }`.
+
+### Credential Storage (Dev Mock)
+
+Use the tRPC endpoint to upsert a base64-encoded JSON envelope (dev mock):
+
+```ts
+// Base64 of { "webhookUrl": "https://hooks.slack.com/..." }
+const envelopeB64 = Buffer.from(JSON.stringify({ webhookUrl: process.env.SLACK_WEBHOOK_URL })).toString("base64");
+await fetch("/api/trpc/connectors.upsertCredential", { method: "POST", body: JSON.stringify({ connectorId: `${orgId}_slack`, envelopeB64 }) });
+```
+
+
+# Connector SDK
+
+```ts
+export type Connector = {
+  id: string;
+  name: string;
+  auth: "oauth2" | "apiKey" | "none";
+  actions: Record<string, (input: unknown, ctx: ConnectorCtx) => Promise<unknown>>;
+};
+```
+Built-ins: HTTP, Slack (webhook), Notion (mock), Sheets (mock), Gmail (mock), Webhook.
