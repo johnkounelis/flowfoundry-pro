@@ -1,0 +1,29 @@
+# Linguist overrides for accurate GitHub language detection
+
+# Documentation
+ADR/*.md linguist-documentation
+*.mdx linguist-documentation
+CHANGELOG.md linguist-documentation
+README.md linguist-documentation
+DEMO.md linguist-documentation
+RUNBOOKS.md linguist-documentation
+SECURITY.md linguist-documentation
+PRIVACY.md linguist-documentation
+TERMS.md linguist-documentation
+DPA.md linguist-documentation
+GOOGLE_OAUTH_SETUP.md linguist-documentation
+NOTICES linguist-documentation
+
+# Generated files (exclude from language stats)
+pnpm-lock.yaml linguist-generated
+*.tsbuildinfo linguist-generated
+
+# Ensure these languages are detected
+*.ts linguist-detectable
+*.tsx linguist-detectable
+*.prisma linguist-detectable
+*.sql linguist-detectable
+*.tf linguist-detectable
+*.sh linguist-detectable
+*.css linguist-detectable
+*.bat linguist-detectable
