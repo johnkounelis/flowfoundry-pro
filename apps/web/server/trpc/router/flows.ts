@@ -6,6 +6,15 @@ import type { Context } from "../context";
 
 const t = initTRPC.context<Context>().create();
 
+// Shared validation schemas for flow endpoints
+const flowNameSchema = z.string().min(1, "Flow name is required").max(100, "Flow name must be under 100 characters").trim();
+const flowDescriptionSchema = z.string().max(500, "Description must be under 500 characters").trim().optional();
+const flowIdSchema = z.string().uuid("Invalid flow ID format");
+const paginationSchema = z.object({
+  take: z.number().int().min(1).max(100).default(20),
+  skip: z.number().int().min(0).default(0),
+});
+
 export const flowsRouter = t.router({
   list: t.procedure.query(async ({ ctx }) => {
     if (!ctx.session?.user?.id) {
