@@ -6,13 +6,16 @@ import { useState } from "react";
 
 export default function DashboardPage() {
   const [timeRange, setTimeRange] = useState<"24h" | "7d" | "30d" | "90d">("7d");
+  const [flowPage, setFlowPage] = useState(0);
+  const flowsPerPage = 3;
 
   const { data: metrics, isLoading: metricsLoading } = trpc.runs.getMetrics.useQuery({ timeRange });
   const { data: runsData, isLoading: runsLoading } = trpc.runs.list.useQuery({ limit: 5, timeRange });
-  const { data: flows, isLoading: flowsLoading } = trpc.flows.list.useQuery();
+  const { data: flowsData, isLoading: flowsLoading } = trpc.flows.list.useQuery({ take: flowsPerPage, skip: flowPage * flowsPerPage });
 
   const recentRuns = runsData?.runs || [];
-  const recentFlows = flows?.slice(0, 3) || [];
+  const recentFlows = flowsData?.flows ?? [];
+  const hasMoreFlows = flowsData?.hasMore ?? false;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -177,6 +180,18 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+          {/* Pagination controls */}
+          {(flowPage > 0 || hasMoreFlows) && (
+            <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+              <Button variant="ghost" size="sm" disabled={flowPage === 0} onClick={() => setFlowPage((p) => Math.max(0, p - 1))}>
+                Previous
+              </Button>
+              <span className="text-xs text-gray-400">Page {flowPage + 1}</span>
+              <Button variant="ghost" size="sm" disabled={!hasMoreFlows} onClick={() => setFlowPage((p) => p + 1)}>
+                Next
+              </Button>
+            </div>
+          )}
         </Card>
       </div>
 

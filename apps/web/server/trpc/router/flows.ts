@@ -16,7 +16,9 @@ const paginationSchema = z.object({
 });
 
 export const flowsRouter = t.router({
-  list: t.procedure.query(async ({ ctx }) => {
+  list: t.procedure
+    .input(paginationSchema.optional())
+    .query(async ({ ctx, input }) => {
     if (!ctx.session?.user?.id) {
       throw new TRPCError({ code: "UNAUTHORIZED", message: "You must be signed in to view flows." });
     }
@@ -27,14 +29,28 @@ export const flowsRouter = t.router({
     });
 
     if (!membership) {
-      return [];
+      return { flows: [], total: 0, hasMore: false };
     }
 
-    const flows = await ctx.prisma.flow.findMany({
-      where: { orgId: membership.org.id },
-      include: { versions: { orderBy: { version: "desc" }, take: 1 } }
-    });
-    return flows.map((f) => ({ id: f.id, name: f.name, currentVersion: f.versions[0]?.version ?? 0, updatedAt: f.updatedAt }));
+    const take = input?.take ?? 20;
+    const skip = input?.skip ?? 0;
+
+    const [flows, total] = await Promise.all([
+      ctx.prisma.flow.findMany({
+        where: { orgId: membership.org.id },
+        include: { versions: { orderBy: { version: "desc" }, take: 1 } },
+        orderBy: { updatedAt: "desc" },
+        take,
+        skip,
+      }),
+      ctx.prisma.flow.count({ where: { orgId: membership.org.id } }),
+    ]);
+
+    return {
+      flows: flows.map((f) => ({ id: f.id, name: f.name, currentVersion: f.versions[0]?.version ?? 0, updatedAt: f.updatedAt })),
+      total,
+      hasMore: skip + take < total,
+    };
   }),
   create: t.procedure.input(z.object({ name: z.string(), description: z.string().optional(), definition: z.any() })).mutation(async ({ input, ctx }) => {
     if (!ctx.session?.user?.id) {
