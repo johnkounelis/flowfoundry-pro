@@ -11,6 +11,42 @@
 import { z } from "zod";
 import fetch from "node-fetch";
 
+/** Base error class for connector execution failures */
+export class ConnectorError extends Error {
+  public readonly connectorId: string;
+  public readonly action: string;
+  public readonly cause?: unknown;
+
+  constructor(connectorId: string, action: string, message: string, cause?: unknown) {
+    super(`[${connectorId}.${action}] ${message}`);
+    this.name = "ConnectorError";
+    this.connectorId = connectorId;
+    this.action = action;
+    this.cause = cause;
+  }
+}
+
+/** Thrown when connector credentials are missing or invalid */
+export class ConnectorAuthError extends ConnectorError {
+  constructor(connectorId: string, action: string, message?: string) {
+    super(connectorId, action, message ?? "Authentication credentials are missing or invalid");
+    this.name = "ConnectorAuthError";
+  }
+}
+
+/** Thrown when an upstream API returns a non-OK response */
+export class ConnectorApiError extends ConnectorError {
+  public readonly statusCode: number;
+  public readonly responseBody?: string;
+
+  constructor(connectorId: string, action: string, statusCode: number, responseBody?: string) {
+    super(connectorId, action, `Upstream API returned status ${statusCode}`);
+    this.name = "ConnectorApiError";
+    this.statusCode = statusCode;
+    this.responseBody = responseBody;
+  }
+}
+
 export type ConnectorCtx = {
   orgId: string;
   credentials?: Record<string, string>;
