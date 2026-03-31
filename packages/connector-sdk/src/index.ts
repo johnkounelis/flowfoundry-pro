@@ -104,8 +104,9 @@ export const Slack: Connector = {
     postMessage: async (input: unknown, ctx) => {
       const { text } = SlackPostMessageSchema.parse(input);
       const url = ctx.credentials?.webhookUrl ?? ctx.credentials?.apiKey;
-      if (!url) throw new Error("Missing Slack webhook URL");
+      if (!url) throw new ConnectorAuthError("slack", "postMessage", "Missing Slack webhook URL. Configure the Slack connector with a valid incoming webhook URL.");
       const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text }) });
+      if (!r.ok) throw new ConnectorApiError("slack", "postMessage", r.status, await r.text());
       return { ok: r.ok };
     }
   }
@@ -168,9 +169,9 @@ export const Gmail: Connector = {
       // Get OAuth credentials from context
       const accessToken = ctx.credentials?.accessToken;
       if (!accessToken) {
-        throw new Error("Gmail OAuth access token not found. Please configure Gmail connector first.");
+        throw new ConnectorAuthError("gmail", "send", "Gmail OAuth access token not found. Please configure the Gmail connector in Settings > Connectors.");
       }
-      
+
       // Create email message in RFC 2822 format
       const email = [
         `To: ${to}`,
@@ -179,14 +180,14 @@ export const Gmail: Connector = {
         ``,
         body
       ].join("\r\n");
-      
+
       // Encode message in base64url format (Gmail API requirement)
       const encodedMessage = Buffer.from(email)
         .toString("base64")
         .replace(/\+/g, "-")
         .replace(/\//g, "_")
         .replace(/=+$/, "");
-      
+
       // Send email via Gmail API
       const response = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
         method: "POST",
@@ -198,11 +199,11 @@ export const Gmail: Connector = {
           raw: encodedMessage
         })
       });
-      
+
       if (!response.ok) {
         const error = await response.text();
         ctx.emitLog("gmail.send.error", { status: response.status, error });
-        throw new Error(`Gmail API error: ${response.status} - ${error}`);
+        throw new ConnectorApiError("gmail", "send", response.status, error);
       }
       
       const result = await response.json() as { id: string };
@@ -261,7 +262,7 @@ export function createSlackClient(ctx: ConnectorCtx) {
       const { text } = SlackPostMessageSchema.parse({ text: input.text });
       // For webhook-based demo: channel/thread are ignored but accepted for typed compatibility
       const url = ctx.credentials?.webhookUrl ?? ctx.credentials?.apiKey;
-      if (!url) throw new Error("Missing Slack webhook URL");
+      if (!url) throw new ConnectorAuthError("slack", "sendMessage", "Missing Slack webhook URL. Configure the Slack connector with a valid incoming webhook URL.");
       const res = await fetch(url, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -288,9 +289,9 @@ export function createGmailClient(ctx: ConnectorCtx) {
       // Get OAuth credentials from context
       const accessToken = ctx.credentials?.accessToken;
       if (!accessToken) {
-        throw new Error("Gmail OAuth access token not found. Please configure Gmail connector first.");
+        throw new ConnectorAuthError("gmail", "sendEmail", "Gmail OAuth access token not found. Please configure the Gmail connector in Settings > Connectors.");
       }
-      
+
       // Create email message in RFC 2822 format
       const toHeader = parsed.to.join(", ");
       const email = [
@@ -300,14 +301,14 @@ export function createGmailClient(ctx: ConnectorCtx) {
         ``,
         parsed.html
       ].join("\r\n");
-      
+
       // Encode message in base64url format (Gmail API requirement)
       const encodedMessage = Buffer.from(email)
         .toString("base64")
         .replace(/\+/g, "-")
         .replace(/\//g, "_")
         .replace(/=+$/, "");
-      
+
       // Send email via Gmail API
       const response = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
         method: "POST",
@@ -319,11 +320,11 @@ export function createGmailClient(ctx: ConnectorCtx) {
           raw: encodedMessage
         })
       });
-      
+
       if (!response.ok) {
         const error = await response.text();
         ctx.emitLog("gmail.client.sendEmail.error", { status: response.status, error });
-        throw new Error(`Gmail API error: ${response.status} - ${error}`);
+        throw new ConnectorApiError("gmail", "sendEmail", response.status, error);
       }
       
       const result = await response.json() as { id: string };
