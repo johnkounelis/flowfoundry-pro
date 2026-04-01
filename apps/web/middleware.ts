@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+// Note: rate limiting logic is in server/rate-limit.ts and applied
+// at the tRPC handler level (not Edge middleware) because Edge runtime
+// does not support the ioredis driver. The middleware below handles
+// auth redirects and security headers only.
+
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/stripe/webhook|api/inngest).*)"]
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/stripe/webhook|api/inngest|api/health).*)"]
 };
 
 // Protected routes that require authentication
