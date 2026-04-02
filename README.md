@@ -140,6 +140,37 @@ Copy `.env.example` to `.env` and configure:
 - **Credential encryption** with sealed box (libsodium) at rest
 - **CI/CD** via GitHub Actions with CodeQL, Trivy, and automated deploys
 
+## API Reference
+
+All API endpoints are served via tRPC at `/api/trpc`. The following routers are available:
+
+| Router | Endpoints | Description |
+|--------|-----------|-------------|
+| `flows` | `list`, `get`, `create`, `saveVersion`, `trigger`, `duplicate`, `archive`, `delete`, `update` | CRUD and execution for workflow definitions |
+| `runs` | `list`, `getMetrics`, `getById` | Execution history and analytics |
+| `org` | `get`, `update`, `invite`, `removeMember` | Organization management |
+| `billing` | `getUsage`, `createCheckout`, `portalLink` | Stripe billing and subscription |
+
+### Health Check
+
+```
+GET /api/health
+```
+
+Returns `200` when all dependencies (database, Redis) are reachable, `503` when degraded. Used as the Kubernetes readiness probe.
+
+### Rate Limiting
+
+API requests are rate-limited per user with a sliding-window algorithm backed by Redis:
+
+| Plan | Requests / minute |
+|------|-------------------|
+| Free | 60 |
+| Pro | 300 |
+| Business | 1,000 |
+
+Rate limit headers (`X-RateLimit-Remaining`, `X-RateLimit-Reset`, `Retry-After`) are included on every response.
+
 ## Troubleshooting
 
 - **Auth not working?** Ensure Postgres is running and `pnpm dev:bootstrap` completed
